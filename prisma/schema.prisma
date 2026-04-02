@@ -1,0 +1,56 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique // We'll use this for Teacher Email, Admin Email, or Student Massar ID
+  password  String   // Hashed password
+  role      String   // "ADMIN", "TEACHER", "STUDENT"
+  createdAt DateTime @default(now())
+
+  // Relations
+  classId       String?        // Applicable if user is a Student (belongs to one class)
+  class         Class?         @relation(fields: [classId], references: [id])
+  announcements Announcement[] // Which announcements this user (Admin) posted
+  materials     Material[]     // Which materials this user (Teacher) uploaded
+}
+
+model Class {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "1st Year A"
+  description String?
+
+  students    User[]   // The students in this class
+  materials   Material[] // Materials uploaded to this class
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  authorId  String
+  createdAt DateTime @default(now())
+
+  author    User     @relation(fields: [authorId], references: [id])
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String?
+  type        String   // "LESSON", "EXERCISE"
+  teacherId   String
+  classId     String
+  createdAt   DateTime @default(now())
+
+  teacher     User     @relation(fields: [teacherId], references: [id])
+  class       Class    @relation(fields: [classId], references: [id])
+}
